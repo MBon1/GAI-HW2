@@ -9,11 +9,13 @@ public class Movement_3 : MonoBehaviour
     // How the agent should move
     public MovementOperation movement = MovementOperation.None;
     MovementOperation prevMovement;
+    public ObstacleAvoidanceOperation obstacleAvoidance = ObstacleAvoidanceOperation.None;
+    ObstacleAvoidanceOperation prevObstacleAvoidance;
 
     bool reachedTarget = false;
 
     // Target
-    [SerializeField] GameObject targetGO = null;
+    [SerializeField] List<GameObject> targets = null;
 
     // Holds the kinematic data for the character and target
     Rigidbody2D characterRb;
@@ -96,6 +98,9 @@ public class Movement_3 : MonoBehaviour
     [SerializeField] [Range(0,360)] float coneAngle = 60;
     [SerializeField] float coneLength = 5;
 
+    [Header("Collision Prediction")]
+    [SerializeField] float targetsRadi = 0.5f;
+
 
     private void Awake()
     {
@@ -106,18 +111,20 @@ public class Movement_3 : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if (targetGO != null)
+        if (targets.Count > 0 && targets[0] != null)
         {
-            targetRb = targetGO.GetComponent<Rigidbody2D>();
+            targetRb = targets[0].GetComponent<Rigidbody2D>();
         }
         prevMovement = movement;
+        prevObstacleAvoidance = obstacleAvoidance;
     }
 
     void FixedUpdate()
     {
-        if (prevMovement != movement && targetPoint != null)
+        if ((prevMovement != movement || prevObstacleAvoidance  != obstacleAvoidance) && targetPoint != null)
         {
             prevMovement = movement;
+            prevObstacleAvoidance = obstacleAvoidance;
 
             currentParam = 0;
             forwardPathTraversal = true;
@@ -127,7 +134,7 @@ public class Movement_3 : MonoBehaviour
             ShowPath(false);
         }
 
-        if (targetGO == null || movement == MovementOperation.None)
+        if (targets.Count == 0 || targets[0] == null)
         {
             WriteBehavior("None");
             return;
@@ -141,7 +148,25 @@ public class Movement_3 : MonoBehaviour
         // Get SteeringOutput for current operation
         SteeringOutput steering = new SteeringOutput();
 
-        if (!reachedTarget)
+        /* Obstacle Avoidance*/
+        //!reachedTarget
+        if (obstacleAvoidance == ObstacleAvoidanceOperation.RayCasting)
+        {
+            steering = GetRayCastSteering(targets[0]);
+            WriteBehavior("RAY CASTING");
+        }
+        else if (obstacleAvoidance == ObstacleAvoidanceOperation.ConeCheck)
+        {
+            steering = GetConeCheckSteering();
+            WriteBehavior("CONE CHECK");
+        }
+        else if (obstacleAvoidance == ObstacleAvoidanceOperation.CollisionPrediction)
+        {
+            steering = GetCollisionPredictionSteering();
+            WriteBehavior("COLLISION PREDICTION");
+        }
+
+        if (steering.linear != Vector3.zero)
         {
             if (movement == MovementOperation.Seek)
             {
@@ -203,7 +228,7 @@ public class Movement_3 : MonoBehaviour
             }
             else if (movement == MovementOperation.RayCasting)
             {
-                steering = GetRayCastSteering();
+                steering = GetRayCastSteering(targets[0]);
                 WriteBehavior("RAY CASTING");
             }
             else if (movement == MovementOperation.ConeCheck)
@@ -216,10 +241,6 @@ public class Movement_3 : MonoBehaviour
                 steering = GetConeCheckSteering();
                 WriteBehavior("COLLISION PREDICTION");
             }
-            else
-            {
-                steering = GetSeekSteering();
-            }
 
             if (movement != MovementOperation.Align &&
                 movement != MovementOperation.Face &&
@@ -231,7 +252,8 @@ public class Movement_3 : MonoBehaviour
         }
         else
         {
-            steering.angular = GetFaceSteering().angular;
+            steering.angular = LookWhereYoureGoing().angular;
+            //steering.angular = GetFaceSteering().angular;
         }
 
         // Perform kinematic update
@@ -243,7 +265,7 @@ public class Movement_3 : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject == targetGO)
+        if (targets.Count > 0 && collision.gameObject == targets[0])
         {
             reachedTarget = true;
         }
@@ -251,7 +273,7 @@ public class Movement_3 : MonoBehaviour
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        if (collision.gameObject == targetGO)
+        if (targets.Count > 0 && collision.gameObject == targets[0])
         {
             reachedTarget = false;
         }
@@ -700,7 +722,7 @@ public class Movement_3 : MonoBehaviour
 
 
     // Ray Casting
-    SteeringOutput GetRayCastSteering()                                                     // !!! Has an issue with larger wall and determining where to go next
+    SteeringOutput GetRayCastSteering(GameObject targetGO)                                                     // !!! Has an issue with larger wall and determining where to go next
     {
         //  1. Calculate the target to delegate to seek
         //     Determine collision
@@ -724,10 +746,10 @@ public class Movement_3 : MonoBehaviour
         }
         else
         {
-            if (hit.transform != null && hit.transform.gameObject == targetGO)
+            /*if (hit.transform != null && hit.transform.gameObject == targetGO)
             {
                 print("HITTING TARGET");
-            }
+            }*/
             Debug.DrawLine(pos, dir, Color.green);
             // No Collision. Do nothing
             return GetArriveSteering();
@@ -744,7 +766,28 @@ public class Movement_3 : MonoBehaviour
 
         SteeringOutput steering = new SteeringOutput();
 
-        List<Collider2D> colliders = new List<Collider2D>(FindObjectsOfType<Collider2D>());
+        Vector3 orientation = transform.up; //orientation.asVector
+        Debug.DrawLine(pos, pos + orientation * coneLength, Color.red);
+
+        GameObject closestTarget = null;
+        for(int i = 0; i < targets.Count; i++)
+        {
+            Vector3 direction = targets[i].transform.position - character.position;
+            if (Vector3.Dot(orientation, direction.normalized) > Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
+            {
+                closestTarget = targets[i];
+            }
+        }
+
+        if (closestTarget != null)
+        {
+            target.position = closestTarget.transform.position;
+            steering = GetEvadeSteering();
+        }
+
+        return steering;
+
+        /*List<Collider2D> colliders = new List<Collider2D>(FindObjectsOfType<Collider2D>());
         if (collider != null)
             colliders.Remove(collider);
 
@@ -755,7 +798,7 @@ public class Movement_3 : MonoBehaviour
         for (int i = colliders.Count - 1; i >= 0; i--)
         {
             Vector3 direction = colliders[i].transform.position - character.position;
-            if (Vector3.Dot(orientation, direction.normalized) <= Mathf.Cos(coneAngle * Mathf.Deg2Rad))
+            if (Vector3.Dot(orientation, direction.normalized) <= Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
             {
                 colliders.RemoveAt(i);
             }
@@ -763,13 +806,98 @@ public class Movement_3 : MonoBehaviour
 
         // Sort remaining colliders to find the one closest to character
         colliders.Sort((c1, c2) => (Vector3.Distance(c1.transform.position, this.transform.position).CompareTo(Vector3.Distance(c2.transform.position, this.transform.position))));
-        
+
         if (colliders.Count > 0)
         {
             target.position = colliders[0].transform.position;
             steering = GetEvadeSteering();
         }
 
+        return steering;
+        */
+    }
+
+
+    // Collision Prediction
+    SteeringOutput GetCollisionPredictionSteering()
+    {
+        SteeringOutput steering = new SteeringOutput();
+
+        // 1. Find the target that's closest to the collision
+        
+        // Store the first collision time
+        float shortestTime = Mathf.Infinity;
+
+        // Store the target that collides the, and other data
+        // that we will need and avoid recalculating
+        GameObject firstTarget = null;
+        float firstMinSeparation = 0;
+        float firstDistance = 0;
+        Vector3 firstRelativePos = Vector3.zero;
+        Vector3 firstRelativeVel = Vector3.zero;
+
+        // Loop through each target
+        foreach (GameObject t in targets)
+        {
+            // Ignore targets without rigid bodies
+            Rigidbody2D tRB = t.GetComponent<Rigidbody2D>();
+            if (tRB == null)
+            {
+                continue;
+            }
+
+            // Calculate the time to collision
+            Vector3 relativePos = t.transform.position - character.position;
+            Vector3 relativeVel = tRB.velocity;
+            float relativeSpeed = relativeVel.magnitude;
+            float timeToCollision = (Vector3.Dot(relativePos, relativeVel) / (relativeSpeed * relativeSpeed));
+
+            // Check if it is going to be a collision at all
+            float distance = relativePos.magnitude;
+            float minSeparation = distance - relativeSpeed * shortestTime;
+            if (minSeparation > 2 * targetsRadi)
+            {
+                continue;
+            }
+
+            // Check if it is the shortest
+            if (timeToCollision > 0 && timeToCollision < shortestTime)
+            {
+                // Store the time, target, and other data
+                shortestTime = timeToCollision;
+                firstTarget = t;
+                firstMinSeparation = minSeparation;
+                firstDistance = distance;
+                firstRelativePos = relativePos;
+                firstRelativeVel = relativeVel;
+            }
+        }
+
+        // 2. Calculate the Steering
+        // If we have no target, then exit
+        if (firstTarget == null)
+        {
+            return steering;
+        }
+
+        // If we're going to hit exactly, or if we're already colliding,
+        // then do the steering based on current position.
+        // Else, calculate the future position
+        Vector3 newRelativePos;
+        if (firstMinSeparation <= 0 || firstDistance < 2 * targetsRadi)
+        {
+            newRelativePos = firstTarget.transform.position - character.position;
+        }
+        else
+        {
+            newRelativePos = firstRelativePos + firstRelativeVel * shortestTime;
+        }
+
+        // Avoid the target
+        newRelativePos.Normalize();
+        steering.linear = newRelativePos * maxAcceleration;
+
+        // Return the steering
         return steering;
     }
 
@@ -957,11 +1085,18 @@ public class Movement_3 : MonoBehaviour
         Face,
         LookWhereYoureGoing,
         Wander,
-        FollowPath, 
+        FollowPath,
 
         // Movement with Obstacle Avoidance
         RayCasting,
-        ConeCheck, 
+        ConeCheck,
+        CollisionPrediction
+    }
+    public enum ObstacleAvoidanceOperation
+    {
+        None,
+        RayCasting,
+        ConeCheck,
         CollisionPrediction
     }
 }
