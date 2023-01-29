@@ -10,6 +10,8 @@ public class Movement_3 : MonoBehaviour
     public MovementOperation movement = MovementOperation.None;
     MovementOperation prevMovement;
 
+    bool reachedTarget = false;
+
     // Target
     [SerializeField] GameObject targetGO = null;
 
@@ -88,11 +90,17 @@ public class Movement_3 : MonoBehaviour
     [Header("Ray Casting")]
     [SerializeField] float avoidDistance = 1.0f;
     [SerializeField] float lookAhead = 2.0f;
+    CircleCollider2D collider;
+
+    [Header("Cone Check")]
+    [SerializeField] [Range(0,360)] float coneAngle = 60;
+    [SerializeField] float coneLength = 5;
 
 
     private void Awake()
     {
         characterRb = this.GetComponent<Rigidbody2D>();
+        collider = this.GetComponent<CircleCollider2D>();
     }
 
     // Start is called before the first frame update
@@ -125,87 +133,105 @@ public class Movement_3 : MonoBehaviour
             return;
         }
 
+        
         // Need to update character and target with their respective rigidbody values
         character = Rb2DToKinematic(characterRb);
         target = Rb2DToKinematic(targetRb);
 
         // Get SteeringOutput for current operation
-        SteeringOutput steering;
-        if (movement == MovementOperation.Seek)
+        SteeringOutput steering = new SteeringOutput();
+
+        if (!reachedTarget)
         {
-            steering = GetSeekSteering();
-            WriteBehavior("SEEK");
-        }
-        else if (movement == MovementOperation.Flee)
-        {
-            steering = GetFleeSteering();
-            WriteBehavior("FLEE");
-        }
-        else if (movement == MovementOperation.Arrive)
-        {
-            steering = GetArriveSteering();
-            WriteBehavior("ARRIVE");
-        }
-        else if (movement == MovementOperation.Align)
-        {
-            steering = GetAlignSteering();
-            WriteBehavior("ALIGN");
-        }
-        else if (movement == MovementOperation.VelocityMatching)
-        {
-            steering = GetVelocityMatchingSteering(target);
-            WriteBehavior("VELOCITY MATCHING");
-        }
-        else if (movement == MovementOperation.Pursue)
-        {
-            steering = GetPursueSteering();
-            WriteBehavior("DYNAMIC PURSUE (with dynamic arrive)");
-        }
-        else if (movement == MovementOperation.Evade)
-        {
-            steering = GetEvadeSteering();
-            WriteBehavior("DYNAMIC EVADE");
-        }
-        else if (movement == MovementOperation.Face)
-        {
-            steering = GetFaceSteering();
-            WriteBehavior("FACE");
-        }
-        else if (movement == MovementOperation.LookWhereYoureGoing)
-        {
-            steering = LookWhereYoureGoing();
-            WriteBehavior("LOOK FORWARD");
-        }
-        else if (movement == MovementOperation.Wander)
-        {
-            steering = Wander();
-            //steering = GetWanderSteering();
-            WriteBehavior("WANDER");
-        }
-        else if (movement == MovementOperation.FollowPath)
-        {
-            ShowPath(true);
-            //steering = GetPathSteering();
-            steering = FollowPath();
-            WriteBehavior("PATH FOLLOWING");
-        }
-        else if (movement == MovementOperation.RayCasting)
-        {
-            GetRayCastSteering();
-            steering = GetSeekSteering();
-            WriteBehavior("RAY CASTING");
+            if (movement == MovementOperation.Seek)
+            {
+                steering = GetSeekSteering();
+                WriteBehavior("SEEK");
+            }
+            else if (movement == MovementOperation.Flee)
+            {
+                steering = GetFleeSteering();
+                WriteBehavior("FLEE");
+            }
+            else if (movement == MovementOperation.Arrive)
+            {
+                steering = GetArriveSteering();
+                WriteBehavior("ARRIVE");
+            }
+            else if (movement == MovementOperation.Align)
+            {
+                steering = GetAlignSteering();
+                WriteBehavior("ALIGN");
+            }
+            else if (movement == MovementOperation.VelocityMatching)
+            {
+                steering = GetVelocityMatchingSteering(target);
+                WriteBehavior("VELOCITY MATCHING");
+            }
+            else if (movement == MovementOperation.Pursue)
+            {
+                steering = GetPursueSteering();
+                WriteBehavior("DYNAMIC PURSUE (with dynamic arrive)");
+            }
+            else if (movement == MovementOperation.Evade)
+            {
+                steering = GetEvadeSteering();
+                WriteBehavior("DYNAMIC EVADE");
+            }
+            else if (movement == MovementOperation.Face)
+            {
+                steering = GetFaceSteering();
+                WriteBehavior("FACE");
+            }
+            else if (movement == MovementOperation.LookWhereYoureGoing)
+            {
+                steering = LookWhereYoureGoing();
+                WriteBehavior("LOOK FORWARD");
+            }
+            else if (movement == MovementOperation.Wander)
+            {
+                steering = Wander();
+                //steering = GetWanderSteering();
+                WriteBehavior("WANDER");
+            }
+            else if (movement == MovementOperation.FollowPath)
+            {
+                ShowPath(true);
+                //steering = GetPathSteering();
+                steering = FollowPath();
+                WriteBehavior("PATH FOLLOWING");
+            }
+            else if (movement == MovementOperation.RayCasting)
+            {
+                steering = GetRayCastSteering();
+                WriteBehavior("RAY CASTING");
+            }
+            else if (movement == MovementOperation.ConeCheck)
+            {
+                steering = GetConeCheckSteering();
+                WriteBehavior("CONE CHECK");
+            }
+            else if (movement == MovementOperation.CollisionPrediction)
+            {
+                steering = GetConeCheckSteering();
+                WriteBehavior("COLLISION PREDICTION");
+            }
+            else
+            {
+                steering = GetSeekSteering();
+            }
+
+            if (movement != MovementOperation.Align &&
+                movement != MovementOperation.Face &&
+                movement != MovementOperation.LookWhereYoureGoing)
+            {
+                // Get character to always face where it's going
+                steering.angular = LookWhereYoureGoing().angular;
+            }
         }
         else
         {
-            steering = GetSeekSteering();
-        }
-
-        if (movement != MovementOperation.Align && 
-            movement != MovementOperation.Face &&
-            movement != MovementOperation.LookWhereYoureGoing)
-        {
-            // Get character to always face where it's going
-            steering.angular = LookWhereYoureGoing().angular;
+            steering.angular = GetFaceSteering().angular;
         }
 
         // Perform kinematic update
@@ -213,6 +239,22 @@ public class Movement_3 : MonoBehaviour
 
         // Write back to character RB at end of Update
         KinematicToRb2(ref characterRb, character);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject == targetGO)
+        {
+            reachedTarget = true;
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject == targetGO)
+        {
+            reachedTarget = false;
+        }
     }
 
     #region Single Agent Movement (HW 1)
@@ -658,24 +700,80 @@ public class Movement_3 : MonoBehaviour
 
 
     // Ray Casting
-    void GetRayCastSteering()
+    SteeringOutput GetRayCastSteering()                                                     // !!! Has an issue with larger wall and determining where to go next
     {
         //  1. Calculate the target to delegate to seek
         //     Determine collision
-        Vector2 pos = character.position;
+        Vector2 pos = character.position/* + transform.up * (collider.radius + 0.01f)*/;
         Vector2 dir = target.position - character.position;
+        dir.Normalize();
 
         RaycastHit2D hit = Physics2D.Raycast(pos, dir, lookAhead);
-        
-        if (hit.transform != null)
+
+        if (hit.transform != null && hit.transform.gameObject != targetGO)
         {
-            Debug.DrawRay(pos, dir, Color.green);
+            Debug.DrawLine(pos, hit.point, Color.red);
+            Debug.Log(hit.transform.gameObject.name);
+
+            // Otherwise, crease a target
+            target.position = hit.point + hit.normal * avoidDistance;
+
+            Debug.DrawRay(pos, hit.normal, Color.blue);
+            return GetSeekSteering();
+
         }
         else
         {
-            Debug.DrawRay(pos, dir, Color.red);
+            if (hit.transform != null && hit.transform.gameObject == targetGO)
+            {
+                print("HITTING TARGET");
+            }
+            Debug.DrawLine(pos, dir, Color.green);
+            // No Collision. Do nothing
+            return GetArriveSteering();
         }
+
+        //return GetSeekSteering();
     }
+
+    // Cone Check
+    SteeringOutput GetConeCheckSteering()       
+    {
+        Vector3 pos = character.position;
+        Vector2 dir = target.position - character.position;
+
+        SteeringOutput steering = new SteeringOutput();
+
+        List<Collider2D> colliders = new List<Collider2D>(FindObjectsOfType<Collider2D>());
+        if (collider != null)
+            colliders.Remove(collider);
+
+        Vector3 orientation = transform.up; //orientation.asVector
+        Debug.DrawLine(pos, pos + orientation * coneLength, Color.red);
+
+        // Check which objects are in the character's "field of view"
+        for (int i = colliders.Count - 1; i >= 0; i--)
+        {
+            Vector3 direction = colliders[i].transform.position - character.position;
+            if (Vector3.Dot(orientation, direction.normalized) <= Mathf.Cos(coneAngle * Mathf.Deg2Rad))
+            {
+                colliders.RemoveAt(i);
+            }
+        }
+
+        // Sort remaining colliders to find the one closest to character
+        colliders.Sort((c1, c2) => (Vector3.Distance(c1.transform.position, this.transform.position).CompareTo(Vector3.Distance(c2.transform.position, this.transform.position))));
+        
+        if (colliders.Count > 0)
+        {
+            target.position = colliders[0].transform.position;
+            steering = GetEvadeSteering();
+        }
+
+        return steering;
+    }
+
+
 
 
 
@@ -690,7 +788,7 @@ public class Movement_3 : MonoBehaviour
     // Transform a scalar to a vector (used for orientaiton)
     public static Vector3 scalarAsVector(float w)
     {
-        return new Vector3(Mathf.Sin(w) * Mathf.Rad2Deg, Mathf.Cos(w) * Mathf.Rad2Deg);
+        return new Vector3(-Mathf.Sin(w), Mathf.Cos(w)) * Mathf.Rad2Deg;
     }
 
     // Draw the target point that the character will move to/from
@@ -775,7 +873,7 @@ public class Movement_3 : MonoBehaviour
 
         public void Update(SteeringOutput steering, float maxSpeed, float time)
         {
-            if (steering.angular != 0)
+            //if (steering.angular != 0)
             position += velocity * time;
             orientation += rotation * time;
 
@@ -862,6 +960,8 @@ public class Movement_3 : MonoBehaviour
         FollowPath, 
 
         // Movement with Obstacle Avoidance
-        RayCasting
+        RayCasting,
+        ConeCheck, 
+        CollisionPrediction
     }
 }

@@ -611,7 +611,7 @@ GameObject:
   - component: {fileID: 767735111}
   - component: {fileID: 767735113}
   - component: {fileID: 767735114}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Target
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -661,6 +661,10 @@ MonoBehaviour:
   arriveRadius: {fileID: 0}
   pathNodes: {fileID: 0}
   behaviorText: {fileID: 0}
+  avoidDistance: 1
+  lookAhead: 2
+  coneAngle: 90
+  coneLength: 5
 --- !u!50 &767735112
 Rigidbody2D:
   serializedVersion: 4
@@ -681,7 +685,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &767735113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1281,7 +1285,7 @@ GameObject:
   - component: {fileID: 1477111997}
   - component: {fileID: 1477111996}
   - component: {fileID: 1477111998}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1300,7 +1304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78003c05bb6cd6149bd780a9757e7b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movement: 0
+  movement: 13
   targetGO: {fileID: 767735110}
   maxSpeed: 5
   maxAcceleration: 3.125
@@ -1334,6 +1338,10 @@ MonoBehaviour:
   arriveRadius: {fileID: 0}
   pathNodes: {fileID: 1078144691}
   behaviorText: {fileID: 862930369}
+  avoidDistance: 7
+  lookAhead: 20
+  coneAngle: 60
+  coneLength: 5
 --- !u!50 &1477111997
 Rigidbody2D:
   serializedVersion: 4
@@ -1354,7 +1362,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!58 &1477111998
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -1379,7 +1387,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1477111995}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.18, y: -1.01, z: 0}
+  m_LocalPosition: {x: -18.15, y: -5.85, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 234234913}
@@ -1464,7 +1472,7 @@ GameObject:
   - component: {fileID: 1587928182}
   - component: {fileID: 1587928181}
   - component: {fileID: 1587928180}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Square (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1557,7 +1565,7 @@ Transform:
   m_GameObject: {fileID: 1587928179}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.49, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 30, z: 1}
+  m_LocalScale: {x: 1, y: 5, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 8
