@@ -812,18 +812,36 @@ public class Movement_3 : MonoBehaviour
     // Cone Check
     SteeringOutput GetConeCheckSteering()       
     {
-        Vector3 pos = character.position;
+        Vector3 pos = transform.position;
 
         SteeringOutput steering = new SteeringOutput();
 
-        Vector3 orientation = transform.up; //orientation.asVector
-        Debug.DrawLine(pos, pos + orientation * coneLength, Color.red);
+        //Vector3 orientation = transform.up; //orientation.asVector
+        Vector3 orientation = this.transform.up;
+        orientation.Normalize();
+
+        Vector2 aimDir = (orientation * coneLength).normalized;
+        float startingAngle = GetAngleFromVectorFloat(aimDir);
+
+        Vector3 dir2 = GetVectorFromAngle(startingAngle + coneAngle / 2);
+        Vector3 dir3 = GetVectorFromAngle(startingAngle - coneAngle / 2);
+
+        Debug.DrawLine(pos, pos + orientation * coneLength, Color.black);
+        Debug.DrawLine(pos, pos + dir2 * coneLength, Color.red);
+        Debug.DrawLine(pos, pos + dir3 * coneLength, Color.red);
 
         GameObject closestTarget = null;
         for(int i = 0; i < targets.Count; i++)
         {
-            Vector3 direction = targets[i].transform.position - character.position;
-            if (Vector3.Dot(orientation, direction.normalized) > Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
+            float distance = Vector3.Distance(targets[i].transform.position, pos);
+            Debug.Log(targets[i].name + " " + distance);
+            if (distance > coneLength)
+            {
+                continue;
+            }
+
+            Vector3 direction = (targets[i].transform.position - pos).normalized;
+            if (Vector3.Dot(aimDir, direction) > Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
             {
                 closestTarget = targets[i];
             }

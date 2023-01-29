@@ -1306,8 +1306,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78003c05bb6cd6149bd780a9757e7b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movement: 1
-  obstacleAvoidance: 1
+  movement: 3
+  obstacleAvoidance: 2
   targets:
   - {fileID: 767735110}
   - {fileID: 1587928179}
@@ -1346,7 +1346,7 @@ MonoBehaviour:
   avoidDistance: 7
   lookAhead: 10
   coneAngle: 60
-  coneLength: 5
+  coneLength: 10
   targetsRadi: 0.45
 --- !u!50 &1477111997
 Rigidbody2D:
