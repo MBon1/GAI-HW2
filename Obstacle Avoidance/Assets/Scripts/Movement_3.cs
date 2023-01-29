@@ -166,7 +166,7 @@ public class Movement_3 : MonoBehaviour
             WriteBehavior("COLLISION PREDICTION");
         }
 
-        if (steering.linear != Vector3.zero)
+        if (steering.linear == Vector3.zero)
         {
             if (movement == MovementOperation.Seek)
             {
@@ -721,48 +721,98 @@ public class Movement_3 : MonoBehaviour
     #endregion
 
 
-    // Ray Casting
-    SteeringOutput GetRayCastSteering(GameObject targetGO)                                                     // !!! Has an issue with larger wall and determining where to go next
+    public Vector3 GetVectorFromAngle(float angle)
     {
+        float angleRad = angle * (Mathf.PI / 180f);
+        return new Vector3(Mathf.Cos(angleRad), Mathf.Sin(angleRad));
+    }
+
+    public float GetAngleFromVectorFloat(Vector3 dir)
+    {
+        dir.Normalize();
+        float n = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        if (n < 0)
+        {
+            n += 360;
+        }
+        return n;
+    }
+
+    // Ray Casting
+    SteeringOutput GetRayCastSteering(GameObject targetGO)
+    {
+        SteeringOutput steering = new SteeringOutput();
+
         //  1. Calculate the target to delegate to seek
         //     Determine collision
-        Vector2 pos = character.position/* + transform.up * (collider.radius + 0.01f)*/;
-        Vector2 dir = target.position - character.position;
+        Vector2 pos = this.transform.position;
+        Vector2 dir = this.transform.up;
         dir.Normalize();
 
-        RaycastHit2D hit = Physics2D.Raycast(pos, dir, lookAhead);
+        Vector2 aimDir = (dir * lookAhead).normalized;
+        float startingAngle = GetAngleFromVectorFloat(aimDir);
 
-        if (hit.transform != null && hit.transform.gameObject != targetGO)
+        Vector2 dir2 = GetVectorFromAngle(startingAngle + 30);
+        Vector2 dir3 = GetVectorFromAngle(startingAngle - 30);
+
+        /*Debug.DrawLine(pos, pos + dir * lookAhead, Color.green);
+        Debug.DrawLine(pos, pos + dir2 * lookAhead, Color.red);
+        Debug.DrawLine(pos, pos + dir3 * lookAhead, Color.blue);*/
+
+        Vector2[] dirs = { dir3, dir, dir2 };
+        RaycastHit2D[] hits = new RaycastHit2D[3];
+
+        for (int i = 0; i < dirs.Length; i++)
         {
-            Debug.DrawLine(pos, hit.point, Color.red);
-            Debug.Log(hit.transform.gameObject.name);
+            hits[i] = Physics2D.Raycast(pos, dirs[i], lookAhead);
+        }
 
-            // Otherwise, crease a target
-            target.position = hit.point + hit.normal * avoidDistance;
+        Vector2 normals = Vector2.zero;
+        int numNormals = 0;
 
-            Debug.DrawRay(pos, hit.normal, Color.blue);
+        bool hitTarget = false;
+        for (int j = 0; j < hits.Length; j++)
+        {
+            if (hits[j].transform != null)
+            {
+                if (hits[j].transform.gameObject != targetGO)
+                {
+                    normals += hits[j].normal;
+                    numNormals++;
+                    Debug.DrawLine(pos, hits[j].point, Color.red);
+                }
+                else
+                {
+                    hitTarget = true;
+                }
+            }
+            else
+            {
+                Debug.DrawLine(pos, pos + dirs[j] * lookAhead, Color.green);
+            }
+        }
+
+        normals /= numNormals;
+
+        /*if (hitTarget)
+        {
+            return GetArriveSteering();
+        }
+        else */if (numNormals > 0)
+        {
+            target.position = pos + normals * avoidDistance;
             return GetSeekSteering();
-
         }
         else
         {
-            /*if (hit.transform != null && hit.transform.gameObject == targetGO)
-            {
-                print("HITTING TARGET");
-            }*/
-            Debug.DrawLine(pos, dir, Color.green);
-            // No Collision. Do nothing
-            return GetArriveSteering();
+            return steering;
         }
-
-        //return GetSeekSteering();
     }
 
     // Cone Check
     SteeringOutput GetConeCheckSteering()       
     {
         Vector3 pos = character.position;
-        Vector2 dir = target.position - character.position;
 
         SteeringOutput steering = new SteeringOutput();
 

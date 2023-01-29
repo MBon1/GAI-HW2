@@ -1306,7 +1306,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78003c05bb6cd6149bd780a9757e7b9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movement: 0
+  movement: 1
   obstacleAvoidance: 1
   targets:
   - {fileID: 767735110}
@@ -1344,7 +1344,7 @@ MonoBehaviour:
   pathNodes: {fileID: 1078144691}
   behaviorText: {fileID: 862930369}
   avoidDistance: 7
-  lookAhead: 20
+  lookAhead: 10
   coneAngle: 60
   coneLength: 5
   targetsRadi: 0.45
@@ -1393,7 +1393,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1477111995}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.9, y: -2.5, z: 0}
+  m_LocalPosition: {x: -23.87, y: -11.38, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 234234913}
