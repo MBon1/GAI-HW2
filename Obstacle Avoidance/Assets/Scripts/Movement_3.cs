@@ -16,6 +16,7 @@ public class Movement_3 : MonoBehaviour
 
     // Target
     [SerializeField] List<GameObject> targets = null;
+    [SerializeField] List<GameObject> ingoredObjects = null;
 
     // Holds the kinematic data for the character and target
     Rigidbody2D characterRb;
@@ -833,15 +834,16 @@ public class Movement_3 : MonoBehaviour
         GameObject closestTarget = null;
         for(int i = 0; i < targets.Count; i++)
         {
-            float distance = Vector3.Distance(targets[i].transform.position, pos);
-            Debug.Log(targets[i].name + " " + distance);
-            if (distance > coneLength)
+            if (targets[i].GetComponent<CircleCollider2D>() == null ||
+                ingoredObjects.Contains(targets[i]))
             {
                 continue;
             }
 
+            float distance = Vector3.Distance(targets[i].transform.position, pos);
             Vector3 direction = (targets[i].transform.position - pos).normalized;
-            if (Vector3.Dot(aimDir, direction) > Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
+            if (Vector3.Dot(aimDir, direction) > Mathf.Cos(coneAngle * Mathf.Deg2Rad) &&
+                distance <= coneLength)
             {
                 closestTarget = targets[i];
             }
