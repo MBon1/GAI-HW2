@@ -19,6 +19,7 @@ public class Movement_3 : MonoBehaviour
     Kinematic character;    // Must convert characterRb to Kinematic and assign it to character each frame
     Kinematic target;       // Must convert targetRb to Kinematic and assign it to target each frame
 
+    [Header("General Movement & Rotation")]
     // Holds the max speed and max acceleration of the character
     [SerializeField] float maxSpeed = 2.0f;
     [SerializeField] float maxAcceleration = 1.25f;
@@ -35,9 +36,11 @@ public class Movement_3 : MonoBehaviour
     [SerializeField] float targetAlignRadius = 1.0f;
     [SerializeField] float alignSlowRadius = 4.0f;
 
+    [Header("Pursue")]
     // Holds the maximum prediction time (for pursue)
     [SerializeField] float maxPrediction = 5;
 
+    [Header("Wander (old)")]
     // Holds the radius and forward offset of the wander circle (for wander old)
     [SerializeField] float wanderOffset = 3;
     [SerializeField] float wanderRadius = 3;
@@ -46,12 +49,14 @@ public class Movement_3 : MonoBehaviour
     // Holds the current orientation of the wander target
     [SerializeField] float wanderOrientation = 0;
 
+    [Header("Wander (new)")]
     // Wand radius, distance, jitter, and target position (for wander new)
-    float wanderRad = 5;
-    float wanderDistance = 5;
-    float wanderJitter = 1;
+    [SerializeField] float wanderRad = 5;
+    [SerializeField] float wanderDistance = 5;
+    [SerializeField] float wanderJitter = 1;
     Vector3 wanderTarget = Vector3.zero;
 
+    [Header("Path Following")]
     // Holds the path to follow
     [SerializeField] Path path;
     // Holds the distance along the path to generate the target.
@@ -67,16 +72,22 @@ public class Movement_3 : MonoBehaviour
     [SerializeField] bool forwardPathTraversal = true;
 
     // Holds the time over which to achieve target speed
+    [Header("Time To Target")]
     [SerializeField] float timeToTarget = 0.1f;
     [SerializeField] float alignmentTimeToTarget = 0.1f;
 
-    [Header("Visualization")]
+    [Header("Movement Visualization (HW 1)")]
     [SerializeField] GameObject targetPointPrefab;
     [SerializeField] GameObject targetPoint;
     [SerializeField] GameObject arriveRadiusPrefab;
     [SerializeField] GameObject arriveRadius;
     [SerializeField] GameObject pathNodes;
     [SerializeField] Text behaviorText;
+
+
+    [Header("Ray Casting")]
+    [SerializeField] float avoidDistance = 1.0f;
+    [SerializeField] float lookAhead = 2.0f;
 
 
     private void Awake()
@@ -178,6 +189,12 @@ public class Movement_3 : MonoBehaviour
             steering = FollowPath();
             WriteBehavior("PATH FOLLOWING");
         }
+        else if (movement == MovementOperation.RayCasting)
+        {
+            GetRayCastSteering();
+            steering = GetSeekSteering();
+            WriteBehavior("RAY CASTING");
+        }
         else
         {
             steering = GetSeekSteering();
@@ -198,6 +215,7 @@ public class Movement_3 : MonoBehaviour
         KinematicToRb2(ref characterRb, character);
     }
 
+    #region Single Agent Movement (HW 1)
     // Seek
     // Returns the desired steering output
     SteeringOutput GetSeekSteering()
@@ -636,7 +654,33 @@ public class Movement_3 : MonoBehaviour
         DestroyArriveRadius();
         return GetSeekSteering();
     }
+    #endregion
 
+
+    // Ray Casting
+    void GetRayCastSteering()
+    {
+        //  1. Calculate the target to delegate to seek
+        //     Determine collision
+        Vector2 pos = character.position;
+        Vector2 dir = target.position - character.position;
+
+        RaycastHit2D hit = Physics2D.Raycast(pos, dir, lookAhead);
+        
+        if (hit.transform != null)
+        {
+            Debug.DrawRay(pos, dir, Color.green);
+        }
+        else
+        {
+            Debug.DrawRay(pos, dir, Color.red);
+        }
+    }
+
+
+
+
+    #region Visualize Single Agent Movement (HW 1)
     // Generate a random binomial
     float RandomBinomial()
     {
@@ -719,7 +763,7 @@ public class Movement_3 : MonoBehaviour
         rb.velocity = kinematic.velocity;
         rb.angularVelocity = kinematic.rotation;
     }
-
+    #endregion
 
     public struct Kinematic
     {
@@ -803,6 +847,8 @@ public class Movement_3 : MonoBehaviour
     public enum MovementOperation
     {
         None,
+
+        // Standard Movement
         Seek,
         Flee,
         Arrive,
@@ -813,6 +859,9 @@ public class Movement_3 : MonoBehaviour
         Face,
         LookWhereYoureGoing,
         Wander,
-        FollowPath
+        FollowPath, 
+
+        // Movement with Obstacle Avoidance
+        RayCasting
     }
 }
