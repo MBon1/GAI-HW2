@@ -176,7 +176,8 @@ public class Movement_3 : MonoBehaviour
         }
         else if (obstacleAvoidance == ObstacleAvoidanceOperation.CollisionPrediction)
         {
-            steering = GetCollisionPredictionSteering();
+            //steering = GetCollisionPredictionSteering();
+            steering = CollisionPrediction();
             WriteBehavior("COLLISION PREDICTION");
         }
 
@@ -962,6 +963,87 @@ public class Movement_3 : MonoBehaviour
         return steering;
     }
 
+
+    SteeringOutput CollisionPrediction()
+    {
+        SteeringOutput steering = new SteeringOutput();
+
+        // 1. Find the target that's closest to the collision
+
+        // Store the first collision time
+        float shortestTime = Mathf.Infinity;
+
+        // Store the target that collides the, and other data
+        // that we will need and avoid recalculating
+        GameObject firstTarget = null;
+        Vector3 predictedTargetPos = Vector3.zero;
+
+        // Loop through each target
+        foreach (GameObject t in targets)
+        {
+            // Ignore targets without rigid bodies
+            Rigidbody2D tRB = t.GetComponent<Rigidbody2D>();
+            if (tRB == null || ingoredObjects.Contains(t))
+            {
+                continue;
+            }
+
+            // Get Position, Angle and Speed of character and target
+            Vector3 pc = transform.position;
+            float characterAngle = transform.rotation.eulerAngles.magnitude;
+            Vector2 vc = characterRb.velocity;
+            vc = new Vector2(vc.x * Mathf.Cos(characterAngle), vc.y * Mathf.Sin(characterAngle));
+
+            Vector3 pt = t.transform.position;
+            float targetAngle = t.transform.rotation.eulerAngles.magnitude;
+            Vector2 vt = tRB.velocity;
+            vt = new Vector2(vt.x * Mathf.Cos(targetAngle), vt.y * Mathf.Sin(targetAngle));
+
+            // Calculate the time to collision
+            Vector2 dp = pt - pc;
+            Vector2 dv = vt - vc;
+
+            float dp_dv = (dp.x * dv.x) + (dp.y * dv.y);
+            float abs_dv = Mathf.Sqrt((dv.x * dv.x) + (dv.y * dv.y));
+
+            float tClosest = -1 * dp_dv / (abs_dv * abs_dv);
+
+
+            // Check if it is going to be a collision at all
+            Vector2 pcT = (Vector2)pc + vc * tClosest;
+            Vector2 ptT = (Vector2)pt + vt * tClosest;
+
+            float closestDistance = (ptT - pcT).magnitude;
+            if (closestDistance > 2 * targetsRadi)
+            {
+                continue;
+            }
+
+            // Check if it is the shortest
+            if (tClosest > 0 && tClosest < shortestTime)
+            {
+                // Store the time, target, and other data
+                shortestTime = tClosest;
+                firstTarget = t;
+                predictedTargetPos = (Vector3)ptT;
+            }
+        }
+
+        // 2. Calculate the Steering
+        // If we have no target, then exit
+        if (firstTarget == null)
+        {
+            return steering;
+        }
+
+        // Avoid the target
+        Debug.DrawLine(this.transform.position, predictedTargetPos, Color.red);
+        print(predictedTargetPos);
+
+        // Evade
+        target.position = predictedTargetPos;
+        return GetFleeSteering();
+    }
 
 
 
