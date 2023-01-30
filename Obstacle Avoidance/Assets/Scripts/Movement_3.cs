@@ -856,35 +856,6 @@ public class Movement_3 : MonoBehaviour
         }
 
         return steering;
-
-        /*List<Collider2D> colliders = new List<Collider2D>(FindObjectsOfType<Collider2D>());
-        if (collider != null)
-            colliders.Remove(collider);
-
-        Vector3 orientation = transform.up; //orientation.asVector
-        Debug.DrawLine(pos, pos + orientation * coneLength, Color.red);
-
-        // Check which objects are in the character's "field of view"
-        for (int i = colliders.Count - 1; i >= 0; i--)
-        {
-            Vector3 direction = colliders[i].transform.position - character.position;
-            if (Vector3.Dot(orientation, direction.normalized) <= Mathf.Cos(coneAngle * Mathf.Deg2Rad))     // May want to revisit this
-            {
-                colliders.RemoveAt(i);
-            }
-        }
-
-        // Sort remaining colliders to find the one closest to character
-        colliders.Sort((c1, c2) => (Vector3.Distance(c1.transform.position, this.transform.position).CompareTo(Vector3.Distance(c2.transform.position, this.transform.position))));
-
-        if (colliders.Count > 0)
-        {
-            target.position = colliders[0].transform.position;
-            steering = GetEvadeSteering();
-        }
-
-        return steering;
-        */
     }
 
 
@@ -911,7 +882,7 @@ public class Movement_3 : MonoBehaviour
         {
             // Ignore targets without rigid bodies
             Rigidbody2D tRB = t.GetComponent<Rigidbody2D>();
-            if (tRB == null)
+            if (tRB == null || ingoredObjects.Contains(t))
             {
                 continue;
             }
@@ -931,7 +902,7 @@ public class Movement_3 : MonoBehaviour
             }
 
             // Check if it is the shortest
-            if (timeToCollision > 0 && timeToCollision < shortestTime)
+            if (timeToCollision >= 0 && timeToCollision < shortestTime)
             {
                 // Store the time, target, and other data
                 shortestTime = timeToCollision;
@@ -1039,7 +1010,8 @@ public class Movement_3 : MonoBehaviour
         if (behaviorText != null)
             behaviorText.text = behavior;
     }
-    
+    #endregion
+
     // Convert a Rigidbody2D to a Kinematic
     Kinematic Rb2DToKinematic(Rigidbody2D rb)
     {
@@ -1059,7 +1031,6 @@ public class Movement_3 : MonoBehaviour
         rb.velocity = kinematic.velocity;
         rb.angularVelocity = kinematic.rotation;
     }
-    #endregion
 
     public struct Kinematic
     {
