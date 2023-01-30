@@ -102,6 +102,12 @@ public class Movement_3 : MonoBehaviour
     [Header("Collision Prediction")]
     [SerializeField] float targetsRadi = 0.5f;
 
+    [Header("Collision Visualization (HW2)")]
+    [SerializeField] GameObject lrPrefab;
+    [SerializeField] Material lrMaterial = null;
+    [SerializeField] float lrWidth = 0.25f;
+    [SerializeField] List<LineRenderer> lines = null;
+
 
     private void Awake()
     {
@@ -122,7 +128,14 @@ public class Movement_3 : MonoBehaviour
 
     void FixedUpdate()
     {
-        if ((prevMovement != movement || prevObstacleAvoidance  != obstacleAvoidance) && targetPoint != null)
+        for (int i = lines.Count - 1; i >= 0; i--)
+        {
+            LineRenderer lr = lines[i];
+            Destroy(lr.gameObject);
+        }
+        lines.Clear();
+
+        if ((prevMovement != movement || prevObstacleAvoidance != obstacleAvoidance) && targetPoint != null)
         {
             prevMovement = movement;
             prevObstacleAvoidance = obstacleAvoidance;
@@ -780,7 +793,8 @@ public class Movement_3 : MonoBehaviour
                 {
                     normals += hits[j].normal;
                     numNormals++;
-                    Debug.DrawLine(pos, hits[j].point, Color.red);
+                    //Debug.DrawLine(pos, hits[j].point, Color.red);
+                    AddLine(pos, hits[j].point, Color.red);
                 }
                 else
                 {
@@ -789,7 +803,8 @@ public class Movement_3 : MonoBehaviour
             }
             else
             {
-                Debug.DrawLine(pos, pos + dirs[j] * lookAhead, Color.green);
+                //Debug.DrawLine(pos, pos + dirs[j] * lookAhead, Color.green);
+                AddLine(pos, pos + dirs[j] * lookAhead, Color.green);
             }
         }
 
@@ -827,9 +842,11 @@ public class Movement_3 : MonoBehaviour
         Vector3 dir2 = GetVectorFromAngle(startingAngle + coneAngle / 2);
         Vector3 dir3 = GetVectorFromAngle(startingAngle - coneAngle / 2);
 
-        Debug.DrawLine(pos, pos + orientation * coneLength, Color.black);
+        /*Debug.DrawLine(pos, pos + orientation * coneLength, Color.black);
         Debug.DrawLine(pos, pos + dir2 * coneLength, Color.red);
-        Debug.DrawLine(pos, pos + dir3 * coneLength, Color.red);
+        Debug.DrawLine(pos, pos + dir3 * coneLength, Color.red);*/
+        AddLine(pos, pos + dir2 * coneLength, Color.grey);
+        AddLine(pos, pos + dir3 * coneLength, Color.grey);
 
         GameObject closestTarget = null;
         for(int i = 0; i < targets.Count; i++)
@@ -1011,6 +1028,45 @@ public class Movement_3 : MonoBehaviour
             behaviorText.text = behavior;
     }
     #endregion
+
+    void AddLine(Vector3 init, Vector3 end, Color color)
+    {
+        LineRenderer lr = GameObject.Instantiate<GameObject>(lrPrefab).GetComponent<LineRenderer>();
+        if (lrMaterial != null)
+            lr.material = lrMaterial;
+        lr.startWidth = lr.endWidth = lrWidth;
+
+        lr.positionCount = 2;
+        lr.SetPositions(new Vector3[] { init, end });
+
+        lr.startColor = lr.endColor = color;
+
+        lines.Add(lr);
+    }
+
+    void AddLine(Vector3 init, Vector3 end, LineRenderer lr, bool recursive)
+    {
+        int index = lr.positionCount;
+        if (recursive)
+        {
+            lr.positionCount += 4;
+        }
+        else
+        {
+            lr.positionCount += 2;
+        }
+
+        lr.SetPositions(new Vector3[] { init, end });
+        /*lr.SetPosition(index, init);
+        lr.SetPosition(index + 1, end);*/
+
+        if (recursive)
+        {
+            lr.SetPositions(new Vector3[] { end, init });
+            /*lr.SetPosition(index + 2, init);
+            lr.SetPosition(index + 3, end);*/
+        }
+    }
 
     // Convert a Rigidbody2D to a Kinematic
     Kinematic Rb2DToKinematic(Rigidbody2D rb)

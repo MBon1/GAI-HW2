@@ -20,7 +20,7 @@ public class BehaviorController : MonoBehaviour
         {
             SceneManager.LoadScene("Init");
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha1))
+        /*else if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             movement.movement = Movement_3.MovementOperation.Seek;
         }
@@ -47,7 +47,7 @@ public class BehaviorController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Alpha0))
         {
             movement.movement = Movement_3.MovementOperation.None;
-        }
+        }*/
         else
         {
             return;

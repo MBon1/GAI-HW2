@@ -339,8 +339,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "Setting NPC Algorithm: \n      None (0)\n      Seek (1)\n      Flee (2)\n     
-    Pursue (3)\n      Evade (4)\n      Wander (5)\n      Follow Path (6)"
+  m_Text: "Obstacle Avoidance Algorithm Key: \n      RayCasting\n            No Collision
+    (Green Lines)\n            Collision (Red Lines)\n      Cone Check: \n           
+    Cone Edges: Grey\n      "
 --- !u!222 &747085121
 CanvasRenderer:
   m_ObjectHideFlags: 0
