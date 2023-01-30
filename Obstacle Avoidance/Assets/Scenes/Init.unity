@@ -209,7 +209,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 424271738}
         m_TargetAssemblyTypeName: Init, Assembly-CSharp
-        m_MethodName: GoToSim
+        m_MethodName: GoToObstacleSim
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

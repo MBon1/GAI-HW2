@@ -10,6 +10,7 @@ public class Movement_3 : MonoBehaviour
     public MovementOperation movement = MovementOperation.None;
     MovementOperation prevMovement;
     public ObstacleAvoidanceOperation obstacleAvoidance = ObstacleAvoidanceOperation.None;
+    public ObstacleAvoidanceOperation defaultOA = ObstacleAvoidanceOperation.None;
     ObstacleAvoidanceOperation prevObstacleAvoidance;
 
     bool reachedTarget = false;
@@ -169,12 +170,14 @@ public class Movement_3 : MonoBehaviour
             steering = GetRayCastSteering(targets[0]);
             WriteBehavior("RAY CASTING");
         }
-        else if (obstacleAvoidance == ObstacleAvoidanceOperation.ConeCheck)
+
+        if (obstacleAvoidance == ObstacleAvoidanceOperation.ConeCheck)
         {
             steering = GetConeCheckSteering();
             WriteBehavior("CONE CHECK");
         }
-        else if (obstacleAvoidance == ObstacleAvoidanceOperation.CollisionPrediction)
+
+        if (obstacleAvoidance == ObstacleAvoidanceOperation.CollisionPrediction)
         {
             //steering = GetCollisionPredictionSteering();
             steering = CollisionPrediction();
@@ -186,60 +189,48 @@ public class Movement_3 : MonoBehaviour
             if (movement == MovementOperation.Seek)
             {
                 steering = GetSeekSteering();
-                WriteBehavior("SEEK");
             }
             else if (movement == MovementOperation.Flee)
             {
                 steering = GetFleeSteering();
-                WriteBehavior("FLEE");
             }
             else if (movement == MovementOperation.Arrive)
             {
                 steering = GetArriveSteering();
-                WriteBehavior("ARRIVE");
             }
             else if (movement == MovementOperation.Align)
             {
                 steering = GetAlignSteering();
-                WriteBehavior("ALIGN");
             }
             else if (movement == MovementOperation.VelocityMatching)
             {
                 steering = GetVelocityMatchingSteering(target);
-                WriteBehavior("VELOCITY MATCHING");
             }
             else if (movement == MovementOperation.Pursue)
             {
                 steering = GetPursueSteering();
-                WriteBehavior("DYNAMIC PURSUE (with dynamic arrive)");
             }
             else if (movement == MovementOperation.Evade)
             {
                 steering = GetEvadeSteering();
-                WriteBehavior("DYNAMIC EVADE");
             }
             else if (movement == MovementOperation.Face)
             {
                 steering = GetFaceSteering();
-                WriteBehavior("FACE");
             }
             else if (movement == MovementOperation.LookWhereYoureGoing)
             {
                 steering = LookWhereYoureGoing();
-                WriteBehavior("LOOK FORWARD");
             }
             else if (movement == MovementOperation.Wander)
             {
                 steering = Wander();
-                //steering = GetWanderSteering();
-                WriteBehavior("WANDER");
             }
             else if (movement == MovementOperation.FollowPath)
             {
                 ShowPath(true);
                 //steering = GetPathSteering();
                 steering = FollowPath();
-                WriteBehavior("PATH FOLLOWING");
             }
             else if (movement == MovementOperation.RayCasting)
             {

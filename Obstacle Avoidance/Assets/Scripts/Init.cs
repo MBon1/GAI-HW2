@@ -7,4 +7,8 @@ public class Init : MonoBehaviour
     {
         SceneManager.LoadScene("MovementTest");
     }
+    public void GoToObstacleSim()
+    {
+        SceneManager.LoadScene("ObstacleTest");
+    }
 }
