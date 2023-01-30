@@ -339,9 +339,10 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "Obstacle Avoidance Algorithm Key: \n      RayCasting\n            No Collision
-    (Green Lines)\n            Collision (Red Lines)\n      Cone Check: \n           
-    Cone Edges: Grey\n      "
+  m_Text: "Obstacle Avoidance Algorithm Key: \n      RayCasting:\n            No
+    Collision (Green Lines)\n            Collision (Red Lines)\n\n      Cone Check:
+    \n            Cone Edges: Grey\n\n      Collision Prediction:\n            Line
+    to Predicted \n                 Collision Point (Yellow)"
 --- !u!222 &747085121
 CanvasRenderer:
   m_ObjectHideFlags: 0

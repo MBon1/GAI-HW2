@@ -1038,7 +1038,8 @@ public class Movement_3 : MonoBehaviour
 
         // Avoid the target
         Debug.DrawLine(this.transform.position, predictedTargetPos, Color.red);
-        print(predictedTargetPos);
+        AddLine(this.transform.position, predictedTargetPos, Color.yellow);
+
 
         // Evade
         target.position = predictedTargetPos;
