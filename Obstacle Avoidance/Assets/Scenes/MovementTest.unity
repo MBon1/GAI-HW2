@@ -1843,7 +1843,7 @@ PrefabInstance:
       objectReference: {fileID: 862930369}
     - target: {fileID: 3292435111002944237, guid: d1a9f633060bb774e9cb8e2a8fff36e4, type: 3}
       propertyPath: obstacleAvoidance
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3292435111002944237, guid: d1a9f633060bb774e9cb8e2a8fff36e4, type: 3}
       propertyPath: targets.Array.size

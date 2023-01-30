@@ -905,8 +905,8 @@ public class Movement_3 : MonoBehaviour
             }
 
             // Calculate the time to collision
-            Vector3 relativePos = t.transform.position - character.position;
-            Vector3 relativeVel = tRB.velocity;
+            Vector3 relativePos = t.transform.position - this.transform.position;
+            Vector3 relativeVel = tRB.velocity - (Vector2)character.velocity;
             float relativeSpeed = relativeVel.magnitude;
             float timeToCollision = (Vector3.Dot(relativePos, relativeVel) / (relativeSpeed * relativeSpeed));
 
@@ -919,7 +919,7 @@ public class Movement_3 : MonoBehaviour
             }
 
             // Check if it is the shortest
-            if (timeToCollision >= 0 && timeToCollision < shortestTime)
+            if (timeToCollision > 0 && timeToCollision < shortestTime)
             {
                 // Store the time, target, and other data
                 shortestTime = timeToCollision;
@@ -942,9 +942,10 @@ public class Movement_3 : MonoBehaviour
         // then do the steering based on current position.
         // Else, calculate the future position
         Vector3 newRelativePos;
-        if (firstMinSeparation <= 0 || firstDistance < 2 * targetsRadi)
+        float dist = (firstTarget.transform.position - transform.position).magnitude;
+        if (firstMinSeparation <= 0 || dist < 2 * targetsRadi)
         {
-            newRelativePos = firstTarget.transform.position - character.position;
+            newRelativePos = firstTarget.transform.position - transform.position;
         }
         else
         {
@@ -953,6 +954,8 @@ public class Movement_3 : MonoBehaviour
 
         // Avoid the target
         newRelativePos.Normalize();
+        Debug.DrawLine(this.transform.position, newRelativePos, Color.red);
+
         steering.linear = newRelativePos * maxAcceleration;
 
         // Return the steering
@@ -1029,6 +1032,7 @@ public class Movement_3 : MonoBehaviour
     }
     #endregion
 
+    #region Visualize Obstacle Avoidance Algorithm
     void AddLine(Vector3 init, Vector3 end, Color color)
     {
         LineRenderer lr = GameObject.Instantiate<GameObject>(lrPrefab).GetComponent<LineRenderer>();
@@ -1043,30 +1047,7 @@ public class Movement_3 : MonoBehaviour
 
         lines.Add(lr);
     }
-
-    void AddLine(Vector3 init, Vector3 end, LineRenderer lr, bool recursive)
-    {
-        int index = lr.positionCount;
-        if (recursive)
-        {
-            lr.positionCount += 4;
-        }
-        else
-        {
-            lr.positionCount += 2;
-        }
-
-        lr.SetPositions(new Vector3[] { init, end });
-        /*lr.SetPosition(index, init);
-        lr.SetPosition(index + 1, end);*/
-
-        if (recursive)
-        {
-            lr.SetPositions(new Vector3[] { end, init });
-            /*lr.SetPosition(index + 2, init);
-            lr.SetPosition(index + 3, end);*/
-        }
-    }
+    #endregion
 
     // Convert a Rigidbody2D to a Kinematic
     Kinematic Rb2DToKinematic(Rigidbody2D rb)
